@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>單字認讀練習</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0e6ff 50%, #fce7f3 100%);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.page {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  gap: 20px;
+  animation: fadeIn .3s ease;
+}
+.page.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes celebrate { 0%,100% { transform: scale(1); } 25% { transform: scale(1.1) rotate(-3deg); } 75% { transform: scale(1.1) rotate(3deg); } }
+
+h1 { font-size: 36px; color: #4a148c; text-align: center; }
+h2 { font-size: 28px; color: #4a148c; text-align: center; }
+
+.card {
+  background: rgba(255,255,255,.92);
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.1);
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+}
+
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 16px;
+  padding: 16px 36px;
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+  touch-action: manipulation;
+  min-width: 180px;
+}
+.btn:active { transform: scale(.95); }
+.btn-primary { background: #7c3aed; color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.35); }
+.btn-green { background: #16a34a; color: #fff; box-shadow: 0 4px 14px rgba(22,163,74,.35); }
+.btn-red { background: #dc2626; color: #fff; box-shadow: 0 4px 14px rgba(220,38,38,.35); }
+.btn-outline { background: transparent; color: #7c3aed; border: 2px solid #7c3aed; }
+.btn-small { padding: 12px 24px; font-size: 18px; min-width: auto; }
+.btn-danger { background: #e11d48; color: #fff; box-shadow: 0 4px 14px rgba(225,29,72,.35); font-size: 16px; padding: 10px 20px; min-width: auto; }
+
+/* Home */
+.home-title { font-size: 42px; margin-bottom: 8px; }
+.home-sub { color: #6b7280; font-size: 16px; margin-bottom: 12px; }
+.home-btns { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
+
+/* Unit Select */
+.unit-list { display: flex; flex-direction: column; gap: 12px; width: 100%; margin: 8px 0; }
+.unit-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #f8fafc; border-radius: 12px; padding: 12px 16px;
+  border: 2px solid #e2e8f0; cursor: pointer; transition: all .15s;
+  font-size: 18px; font-weight: 500;
+}
+.unit-item.selected { border-color: #7c3aed; background: #f5f3ff; }
+.unit-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: #7c3aed; cursor: pointer; }
+.unit-item .unit-name { flex: 1; text-align: left; }
+.unit-item .unit-word-count { color: #9ca3af; font-size: 14px; }
+
+/* Practice */
+.word-card { width: 100%; max-width: 520px; text-align: center; }
+.progress-bar { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; margin-bottom: 8px; overflow: hidden; }
+.progress-fill { height: 100%; background: #7c3aed; border-radius: 3px; transition: width .3s ease; }
+.progress-text { color: #6b7280; font-size: 14px; margin-bottom: 16px; }
+.word-display {
+  font-size: clamp(48px, 10vw, 80px);
+  font-weight: 700;
+  color: #1e293b;
+  padding: 32px 16px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  margin-bottom: 8px;
+  word-break: break-word;
+  animation: popIn .3s ease;
+  line-height: 1.3;
+}
+.unit-label { color: #9ca3af; font-size: 16px; margin-bottom: 28px; }
+.action-btns { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.action-btns .btn { min-width: 140px; font-size: 24px; padding: 20px 32px; }
+
+/* Result */
+.result-icon { font-size: 64px; margin-bottom: 8px; }
+.result-title { font-size: 32px; font-weight: 700; color: #1e293b; }
+.result-stats { font-size: 20px; color: #4b5563; line-height: 1.8; margin: 12px 0; }
+.result-stats .num { font-weight: 700; }
+.result-stats .num.green { color: #16a34a; }
+.result-stats .num.red { color: #dc2626; }
+.result-btns { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; margin-top: 8px; }
+
+/* Records */
+.records-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+.records-table th { background: #f5f3ff; color: #4a148c; padding: 10px 8px; text-align: center; font-weight: 600; border-bottom: 2px solid #ddd6fe; }
+.records-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+.records-table tr:last-child td { border-bottom: none; }
+.records-table .word-cell { text-align: left; font-weight: 500; }
+.records-wrap { max-height: 400px; overflow-y: auto; width: 100%; }
+.empty-msg { color: #9ca3af; font-size: 16px; padding: 24px 0; }
+.records-btns { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%; margin-top: 4px; }
+
+/* Confirm overlay */
+.overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  align-items: center; justify-content: center; z-index: 100;
+  padding: 24px;
+}
+.overlay.active { display: flex; }
+.overlay-card {
+  background: #fff; border-radius: 20px; padding: 32px;
+  max-width: 380px; width: 100%; text-align: center;
+  animation: popIn .25s ease;
+}
+.overlay-card p { font-size: 18px; color: #374151; margin-bottom: 20px; line-height: 1.6; }
+.overlay-btns { display: flex; gap: 12px; justify-content: center; }
+
+.star-container { display: flex; gap: 6px; justify-content: center; margin: 16px 0; }
+.star { font-size: 36px; animation: celebrate .6s ease infinite; }
+.star:nth-child(2) { animation-delay: .1s; }
+.star:nth-child(3) { animation-delay: .2s; }
+</style>
+</head>
+<body>
+
+<!-- ========== HOME ========== -->
+<div id="page-home" class="page active">
+  <div class="card" style="text-align:center;">
+    <div class="home-title">ABC 認讀樂</div>
+    <div class="home-sub">K3 英文單字練習</div>
+    <div class="home-btns">
+      <button class="btn btn-primary" onclick="showUnitSelect()">開始練習</button>
+      <button class="btn btn-outline" onclick="showRecords()">學習紀錄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== UNIT SELECT ========== -->
+<div id="page-units" class="page">
+  <div class="card">
+    <h2>選擇練習單元</h2>
+    <div class="unit-list" id="unit-list"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:4px;">
+      <button class="btn btn-primary" onclick="startPractice()">開始練習</button>
+      <button class="btn btn-outline btn-small" onclick="showHome()">返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PRACTICE ========== -->
+<div id="page-practice" class="page">
+  <div class="word-card">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-text" id="progress-text">第 1 題，共 6 題</div>
+    <div class="word-display" id="word-display">eraser</div>
+    <div class="unit-label" id="unit-label">Unit 1 文具</div>
+    <div class="action-btns">
+      <button class="btn btn-green" onclick="markCorrect()">&#10003; 正確</button>
+      <button class="btn btn-red" onclick="markWrong()">&#10007; 錯誤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== RESULT ========== -->
+<div id="page-result" class="page">
+  <div class="card">
+    <div class="result-icon" id="result-icon">&#127881;</div>
+    <div class="result-title" id="result-title">練習完成！</div>
+    <div class="result-stats" id="result-stats"></div>
+    <div class="star-container" id="star-container" style="display:none;">
+      <span class="star">&#11088;</span>
+      <span class="star">&#11088;</span>
+      <span class="star">&#11088;</span>
+    </div>
+    <div class="result-btns">
+      <button class="btn btn-primary" id="btn-retry" style="display:none" onclick="retryWrong()">錯題重練</button>
+      <button class="btn btn-outline" onclick="showHome()">返回首頁</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== RECORDS ========== -->
+<div id="page-records" class="page">
+  <div class="card">
+    <h2>學習紀錄</h2>
+    <div class="records-wrap" id="records-wrap">
+      <table class="records-table" id="records-table">
+        <thead><tr><th>單字</th><th>單元</th><th>正確</th><th>錯誤</th><th>正確率</th></tr></thead>
+        <tbody id="records-body"></tbody>
+      </table>
+      <div class="empty-msg" id="empty-msg">還沒有學習紀錄</div>
+    </div>
+    <div class="records-btns">
+      <button class="btn btn-danger btn-small" onclick="showConfirmReset()">重置所有數據</button>
+      <button class="btn btn-outline btn-small" onclick="showHome()">返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CONFIRM OVERLAY ========== -->
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <p id="overlay-msg">確定要重置所有學習數據嗎？</p>
+    <div class="overlay-btns">
+      <button class="btn btn-danger btn-small" id="overlay-confirm">確定</button>
+      <button class="btn btn-outline btn-small" onclick="hideOverlay()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const UNITS = [
+  { id: 1, name: 'Unit 1 文具', words: ['eraser','glue','pencil','ruler','crayons','paper'] },
+  { id: 2, name: 'Unit 2 天氣', words: ['dry','wet','raincoat','sky','rain','umbrella'] },
+  { id: 3, name: 'Unit 3 科技', words: ['computer','mobile phone','newspaper','telephone','clock'] },
+  { id: 4, name: 'Unit 4 天氣', words: ['cloudy','rainy','sunny','windy','rainbow','wind','vegetables'] },
+  { id: 5, name: 'Unit 5 學校', words: ['classroom','computer room','playground','toilet','tuck shop','uniform'] }
+];
+
+const STORAGE_KEY = 'word_practice_records';
+
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveRecords(records) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
+function getWordRecord(word) {
+  const records = loadRecords();
+  if (!records[word]) records[word] = { correct: 0, incorrect: 0 };
+  return records[word];
+}
+
+function updateWordRecord(word, isCorrect) {
+  const records = loadRecords();
+  if (!records[word]) records[word] = { correct: 0, incorrect: 0 };
+  if (isCorrect) records[word].correct++;
+  else records[word].incorrect++;
+  saveRecords(records);
+}
+
+// ============ STATE ============
+let selectedUnitIds = new Set();
+let practiceQueue = [];
+let currentIndex = 0;
+let wrongWords = [];
+let roundCorrect = 0;
+let roundWrong = 0;
+let isRetryMode = false;
+
+// ============ PAGE NAV ============
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showHome() { showPage('page-home'); }
+function showUnitSelect() {
+  renderUnitList();
+  showPage('page-units');
+}
+
+// ============ UNIT LIST ============
+function renderUnitList() {
+  const container = document.getElementById('unit-list');
+  container.innerHTML = '';
+  UNITS.forEach(u => {
+    const div = document.createElement('div');
+    div.className = 'unit-item' + (selectedUnitIds.has(u.id) ? ' selected' : '');
+    div.innerHTML = `
+      <input type="checkbox" ${selectedUnitIds.has(u.id) ? 'checked' : ''} data-id="${u.id}">
+      <span class="unit-name">${u.name}</span>
+      <span class="unit-word-count">${u.words.length} 字</span>
+    `;
+    div.querySelector('input[type="checkbox"]').addEventListener('change', function(e) {
+      e.stopPropagation();
+      if (this.checked) selectedUnitIds.add(u.id);
+      else selectedUnitIds.delete(u.id);
+      div.classList.toggle('selected', this.checked);
+    });
+    div.addEventListener('click', function(e) {
+      if (e.target.tagName === 'INPUT') return;
+      const cb = this.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event('change'));
+    });
+    container.appendChild(div);
+  });
+}
+
+// ============ PRACTICE ============
+function startPractice() {
+  if (selectedUnitIds.size === 0) {
+    // select all by default if none selected
+    UNITS.forEach(u => selectedUnitIds.add(u.id));
+    renderUnitList();
+  }
+  const words = [];
+  const unitMap = {};
+  UNITS.forEach(u => {
+    if (selectedUnitIds.has(u.id)) {
+      u.words.forEach(w => {
+        words.push({ word: w, unit: u.name });
+        unitMap[w] = u.name;
+      });
+    }
+  });
+  if (words.length === 0) return;
+  practiceQueue = shuffleArray(words);
+  currentIndex = 0;
+  wrongWords = [];
+  roundCorrect = 0;
+  roundWrong = 0;
+  isRetryMode = false;
+  showPage('page-practice');
+  showWord();
+}
+
+function retryWrong() {
+  if (wrongWords.length === 0) return;
+  practiceQueue = shuffleArray(wrongWords);
+  currentIndex = 0;
+  wrongWords = [];
+  isRetryMode = true;
+  showPage('page-practice');
+  showWord();
+}
+
+function showWord() {
+  const fill = document.getElementById('progress-fill');
+  const text = document.getElementById('progress-text');
+  const display = document.getElementById('word-display');
+  const label = document.getElementById('unit-label');
+
+  const total = practiceQueue.length;
+  const idx = currentIndex + 1;
+  fill.style.width = ((currentIndex / total) * 100) + '%';
+  text.textContent = `第 ${idx} 題，共 ${total} 題` + (isRetryMode ? '（錯題重練）' : '');
+
+  const item = practiceQueue[currentIndex];
+  display.textContent = item.word;
+  display.style.animation = 'none';
+  void display.offsetHeight;
+  display.style.animation = 'popIn .3s ease';
+  label.textContent = item.unit;
+}
+
+function markCorrect() {
+  const item = practiceQueue[currentIndex];
+  updateWordRecord(item.word, true);
+  roundCorrect++;
+  nextWord();
+}
+
+function markWrong() {
+  const item = practiceQueue[currentIndex];
+  updateWordRecord(item.word, false);
+  wrongWords.push(item);
+  roundWrong++;
+  nextWord();
+}
+
+function nextWord() {
+  currentIndex++;
+  if (currentIndex >= practiceQueue.length) {
+    showResult();
+  } else {
+    showWord();
+  }
+}
+
+// ============ RESULT ============
+function showResult() {
+  const total = roundCorrect + roundWrong;
+  const pct = total > 0 ? Math.round((roundCorrect / total) * 100) : 0;
+  const allCorrect = (roundWrong === 0);
+
+  document.getElementById('result-icon').textContent = allCorrect ? '\u{1F389}' : '\u{1F44D}';
+  document.getElementById('result-title').textContent = isRetryMode
+    ? (allCorrect ? '\u{1F3C6} 錯題全對，太棒了！' : '\u{1F4AA} 錯題練習完成')
+    : (allCorrect ? '\u{1F389} 全部答對！' : '\u{1F44D} 練習完成！');
+  document.getElementById('result-stats').innerHTML =
+    `共 <span class="num">${total}</span> 題<br>` +
+    `正確 <span class="num green">${roundCorrect}</span> 題 &nbsp;|&nbsp; ` +
+    `錯誤 <span class="num red">${roundWrong}</span> 題<br>` +
+    `正確率 <span class="num">${pct}%</span>`;
+
+  document.getElementById('star-container').style.display = allCorrect ? 'flex' : 'none';
+
+  const retryBtn = document.getElementById('btn-retry');
+  if (wrongWords.length > 0) {
+    retryBtn.textContent = `錯題重練（${wrongWords.length} 題）`;
+    retryBtn.style.display = 'inline-block';
+  } else {
+    retryBtn.style.display = 'none';
+  }
+  showPage('page-result');
+}
+
+// ============ RECORDS ============
+function showRecords() {
+  const records = loadRecords();
+  const tbody = document.getElementById('records-body');
+  const empty = document.getElementById('empty-msg');
+  tbody.innerHTML = '';
+
+  let hasData = false;
+  UNITS.forEach(u => {
+    u.words.forEach(w => {
+      const r = records[w];
+      if (r && (r.correct > 0 || r.incorrect > 0)) {
+        hasData = true;
+        const total = r.correct + r.incorrect;
+        const pct = total > 0 ? Math.round((r.correct / total) * 100) + '%' : '-';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="word-cell">${w}</td>
+          <td>${u.name}</td>
+          <td>${r.correct}</td>
+          <td>${r.incorrect}</td>
+          <td>${pct}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    });
+  });
+
+  empty.style.display = hasData ? 'none' : 'block';
+  document.getElementById('records-table').style.display = hasData ? '' : 'none';
+  showPage('page-records');
+}
+
+function showConfirmReset() {
+  document.getElementById('overlay-msg').textContent = '確定要重置所有學習數據嗎？此操作無法復原。';
+  document.getElementById('overlay-confirm').onclick = function() {
+    localStorage.removeItem(STORAGE_KEY);
+    hideOverlay();
+    showRecords();
+  };
+  document.getElementById('overlay').classList.add('active');
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('active');
+}
+
+// ============ UTILS ============
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', function() {
+  // select all units by default
+  UNITS.forEach(u => selectedUnitIds.add(u.id));
+});
+</script>
+</body>
+</html>
