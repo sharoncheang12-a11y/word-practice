@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>K3 數學溫習</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.page {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  gap: 16px;
+  animation: fadeIn .3s ease;
+}
+.page.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+
+h1 { font-size: 34px; color: #7c3aed; text-align: center; }
+h2 { font-size: 26px; color: #7c3aed; text-align: center; }
+
+.card {
+  background: rgba(255,255,255,.92);
+  border-radius: 24px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.1);
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+}
+
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 16px;
+  padding: 16px 36px;
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+  touch-action: manipulation;
+  min-width: 180px;
+}
+.btn:active { transform: scale(.95); }
+.btn-primary { background: #7c3aed; color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.35); }
+.btn-green { background: #16a34a; color: #fff; box-shadow: 0 4px 14px rgba(22,163,74,.35); }
+.btn-red { background: #dc2626; color: #fff; box-shadow: 0 4px 14px rgba(220,38,38,.35); }
+.btn-outline { background: transparent; color: #7c3aed; border: 2px solid #7c3aed; }
+.btn-small { padding: 12px 24px; font-size: 18px; min-width: auto; }
+.btn-danger { background: #e11d48; color: #fff; box-shadow: 0 4px 14px rgba(225,29,72,.35); font-size: 16px; padding: 10px 20px; min-width: auto; }
+
+/* Topic Select */
+.topic-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; margin: 8px 0; }
+.topic-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #f8fafc; border-radius: 12px; padding: 12px 16px;
+  border: 2px solid #e2e8f0; cursor: pointer; transition: all .15s;
+  font-size: 17px; font-weight: 500;
+}
+.topic-item.selected { border-color: #7c3aed; background: #f5f3ff; }
+.topic-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: #7c3aed; cursor: pointer; }
+
+/* Question */
+.q-type-badge {
+  display: inline-block; background: #ede9fe; color: #7c3aed;
+  padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  margin-bottom: 8px;
+}
+.q-number { color: #6b7280; font-size: 14px; margin-bottom: 4px; }
+.progress-bar { width: 100%; max-width: 520px; height: 6px; background: #e2e8f0; border-radius: 3px; margin-bottom: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: #7c3aed; border-radius: 3px; transition: width .3s ease; }
+.q-text {
+  font-size: clamp(36px, 8vw, 60px);
+  font-weight: 700;
+  color: #1e293b;
+  padding: 24px 16px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  margin-bottom: 4px;
+  word-break: break-word;
+  animation: popIn .3s ease;
+  line-height: 1.4;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.q-hint { color: #9ca3af; font-size: 15px; margin-bottom: 20px; }
+.action-btns { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.action-btns .btn { min-width: 140px; font-size: 24px; padding: 20px 32px; }
+
+/* Clock face */
+.clock-face {
+  width: 180px; height: 180px; border-radius: 50%; border: 6px solid #1e293b;
+  position: relative; margin: 8px auto; background: #fff;
+  box-shadow: inset 0 0 10px rgba(0,0,0,.1);
+}
+.clock-center {
+  width: 10px; height: 10px; border-radius: 50%; background: #1e293b;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 5;
+}
+.clock-hour {
+  position: absolute; bottom: 50%; left: 50%; transform-origin: bottom center;
+  width: 6px; height: 50px; background: #1e293b; border-radius: 3px; z-index: 3;
+}
+.clock-minute {
+  position: absolute; bottom: 50%; left: 50%; transform-origin: bottom center;
+  width: 4px; height: 70px; background: #dc2626; border-radius: 2px; z-index: 2;
+}
+.clock-mark { position: absolute; font-size: 14px; font-weight: 700; color: #4b5563; }
+
+/* Pattern display */
+.pattern-display {
+  display: flex; gap: 12px; justify-content: center; align-items: center;
+  flex-wrap: wrap; padding: 12px; font-size: 42px;
+}
+.pattern-slot { width: 50px; height: 50px; border: 2px dashed #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+
+/* Compare */
+.compare-display { display: flex; gap: 16px; justify-content: center; align-items: center; font-size: 48px; font-weight: 700; }
+
+/* Result */
+.result-icon { font-size: 60px; margin-bottom: 8px; }
+.result-title { font-size: 30px; font-weight: 700; color: #1e293b; }
+.result-stats { font-size: 19px; color: #4b5563; line-height: 1.8; margin: 12px 0; }
+.result-stats .num { font-weight: 700; }
+.result-stats .num.green { color: #16a34a; }
+.result-stats .num.red { color: #dc2626; }
+.result-btns { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; margin-top: 4px; }
+.star-container { display: flex; gap: 6px; justify-content: center; margin: 12px 0; }
+.star { font-size: 34px; animation: celebrate .6s ease infinite; }
+.star:nth-child(2) { animation-delay: .1s; }
+.star:nth-child(3) { animation-delay: .2s; }
+@keyframes celebrate { 0%,100% { transform: scale(1); } 25% { transform: scale(1.15) rotate(-3deg); } 75% { transform: scale(1.15) rotate(3deg); } }
+
+/* Records */
+.records-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+.records-table th { background: #f5f3ff; color: #4a148c; padding: 8px 6px; text-align: center; font-weight: 600; border-bottom: 2px solid #ddd6fe; }
+.records-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+.records-wrap { max-height: 380px; overflow-y: auto; width: 100%; }
+.empty-msg { color: #9ca3af; font-size: 16px; padding: 20px 0; }
+.records-btns { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%; margin-top: 4px; }
+
+/* Overlay */
+.overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  align-items: center; justify-content: center; z-index: 100;
+  padding: 24px;
+}
+.overlay.active { display: flex; }
+.overlay-card {
+  background: #fff; border-radius: 20px; padding: 28px;
+  max-width: 380px; width: 100%; text-align: center;
+  animation: popIn .25s ease;
+}
+.overlay-card p { font-size: 18px; color: #374151; margin-bottom: 20px; line-height: 1.6; }
+.overlay-btns { display: flex; gap: 12px; justify-content: center; }
+
+/* Counting grid */
+.count-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 280px; margin: 8px auto; }
+.count-cell { width: 48px; height: 48px; border: 2px solid #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; background: #f8fafc; }
+
+.container-vis { display: flex; gap: 16px; justify-content: center; align-items: flex-end; padding: 16px; }
+.cup { width: 60px; display: flex; flex-direction: column; align-items: center; }
+.cup-body { width: 100%; border: 3px solid #60a5fa; border-top: none; border-radius: 0 0 8px 8px; background: linear-gradient(to top, #93c5fd, #dbeafe); min-height: 20px; margin-bottom: 4px; }
+.cup-label { font-size: 14px; font-weight: 600; color: #4b5563; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="card" style="text-align:center;">
+    <div style="font-size:48px;margin-bottom:4px;">123</div>
+    <h1>數學溫習樂</h1>
+    <div style="color:#6b7280;font-size:15px;margin-bottom:12px;">K3 算術互動練習</div>
+    <div class="home-btns" style="display:flex;flex-direction:column;gap:14px;align-items:center;width:100%;">
+      <button class="btn btn-primary" onclick="showTopicSelect()">開始練習</button>
+      <button class="btn btn-outline" onclick="showRecords()">學習紀錄</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPIC SELECT -->
+<div id="page-topics" class="page">
+  <div class="card">
+    <h2>選擇練習範疇</h2>
+    <div class="topic-grid" id="topic-grid"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:4px;">
+      <button class="btn btn-primary" onclick="startPractice()">開始練習</button>
+      <button class="btn btn-outline btn-small" onclick="showHome()">返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRACTICE -->
+<div id="page-practice" class="page">
+  <div class="word-card" style="width:100%;max-width:520px;text-align:center;">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="q-number" id="q-number">第 1 題，共 10 題</div>
+    <div class="q-type-badge" id="q-type-badge">加法</div>
+    <div class="q-text" id="q-text">5 + 3 = ?</div>
+    <div id="q-visual"></div>
+    <div class="q-hint" id="q-hint">讓小朋友算出答案，你來判斷對錯</div>
+    <div class="action-btns">
+      <button class="btn btn-green" onclick="markCorrect()">&#10003; 正確</button>
+      <button class="btn btn-red" onclick="markWrong()">&#10007; 錯誤</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="page-result" class="page">
+  <div class="card">
+    <div class="result-icon" id="result-icon">&#127881;</div>
+    <div class="result-title" id="result-title">練習完成！</div>
+    <div class="result-stats" id="result-stats"></div>
+    <div class="star-container" id="star-container" style="display:none;">
+      <span class="star">&#11088;</span>
+      <span class="star">&#11088;</span>
+      <span class="star">&#11088;</span>
+    </div>
+    <div class="result-btns">
+      <button class="btn btn-primary" id="btn-retry" style="display:none" onclick="retryWrong()">錯題重練</button>
+      <button class="btn btn-outline" onclick="showHome()">返回首頁</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECORDS -->
+<div id="page-records" class="page">
+  <div class="card">
+    <h2>學習紀錄</h2>
+    <div class="records-wrap" id="records-wrap">
+      <div class="records-table-wrap" style="overflow-x:auto;">
+        <table class="records-table" id="records-table">
+          <thead><tr><th>題目</th><th>類型</th><th>正確</th><th>錯誤</th><th>正確率</th></tr></thead>
+          <tbody id="records-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-msg" id="empty-msg">還沒有學習紀錄</div>
+    </div>
+    <div class="records-btns">
+      <button class="btn btn-danger btn-small" onclick="showConfirmReset()">重置所有數據</button>
+      <button class="btn btn-outline btn-small" onclick="showHome()">返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <p id="overlay-msg">確定要重置所有學習數據嗎？</p>
+    <div class="overlay-btns">
+      <button class="btn btn-danger btn-small" id="overlay-confirm">確定</button>
+      <button class="btn btn-outline btn-small" onclick="hideOverlay()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const TOPICS = [
+  { id: 'addsub', name: '加減法 (10以內)', icon: '+/-', genCount: 8 },
+  { id: 'connect', name: '連加法 (10以內)', icon: '++', genCount: 4 },
+  { id: 'sequence', name: '數字規律填空', icon: '123', genCount: 5 },
+  { id: 'count5', name: '5個一數', icon: '5s', genCount: 4 },
+  { id: 'count10', name: '10個一數', icon: '10s', genCount: 3 },
+  { id: 'backward', name: '倒數 (1-30)', icon: '&#8595;', genCount: 4 },
+  { id: 'compare', name: '比較大小 (> < =)', icon: '> <', genCount: 5 },
+  { id: 'clock', name: '時鐘 (正點/半點)', icon: '&#x1F556;', genCount: 4 },
+  { id: 'wordprob', name: '文字題', icon: '&#x1F4DD;', genCount: 4 },
+  { id: 'pattern', name: '圖案規律', icon: '&#x2B55;', genCount: 4 }
+];
+
+const STORAGE_KEY = 'math_practice_records_v2';
+
+function loadRecords() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; } }
+function saveRecords(r) { localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
+
+function getRecord(qid) {
+  const r = loadRecords();
+  if (!r[qid]) r[qid] = { correct: 0, incorrect: 0 };
+  return r[qid];
+}
+function updateRecord(qid, ok) {
+  const r = loadRecords();
+  if (!r[qid]) r[qid] = { correct: 0, incorrect: 0 };
+  if (ok) r[qid].correct++; else r[qid].incorrect++;
+  saveRecords(r);
+}
+
+// ==================== STATE ====================
+let selectedTopicIds = new Set();
+let practiceQueue = [];
+let currentIndex = 0;
+let wrongItems = [];
+let roundCorrect = 0, roundWrong = 0;
+let isRetry = false;
+
+// ==================== PAGE NAV ====================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showHome() { showPage('page-home'); }
+
+// ==================== TOPICS ====================
+function showTopicSelect() {
+  const cont = document.getElementById('topic-grid');
+  cont.innerHTML = '';
+  TOPICS.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'topic-item' + (selectedTopicIds.has(t.id) ? ' selected' : '');
+    div.innerHTML = `<input type="checkbox" ${selectedTopicIds.has(t.id)?'checked':''} data-id="${t.id}">
+      <span style="font-size:24px;margin-right:4px;">${t.icon}</span>
+      <span>${t.name}</span>`;
+    div.querySelector('input').addEventListener('change', function(e) {
+      e.stopPropagation();
+      if (this.checked) selectedTopicIds.add(t.id);
+      else selectedTopicIds.delete(t.id);
+      div.classList.toggle('selected', this.checked);
+    });
+    div.addEventListener('click', function(e) {
+      if (e.target.tagName === 'INPUT') return;
+      const cb = this.querySelector('input');
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event('change'));
+    });
+    cont.appendChild(div);
+  });
+  showPage('page-topics');
+}
+
+// ==================== QUESTION GENERATOR ====================
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+function genQuestions() {
+  const qs = [];
+  const ids = selectedTopicIds.size === 0 ? TOPICS.map(t => t.id) : [...selectedTopicIds];
+
+  ids.forEach(tid => {
+    const topic = TOPICS.find(t => t.id === tid);
+    if (!topic) return;
+    const n = topic.genCount;
+
+    switch (tid) {
+      case 'addsub': {
+        for (let i = 0; i < n; i++) {
+          const a = rand(1, 9), b = rand(1, 9);
+          const op = Math.random() < 0.5 ? '+' : '-';
+          const val = op === '+' ? a + b : a - b;
+          if (op === '-' && val < 0) { i--; continue; }
+          const qid = `addsub_${a}_${op}_${b}`;
+          const display = op === '+'
+            ? `${a}<span style="color:#16a34a"> + </span>${b}<span style="color:#16a34a"> = </span><span style="color:#dc2626">?</span>`
+            : `${a}<span style="color:#dc2626"> &minus; </span>${b}<span style="color:#dc2626"> = </span><span style="color:#dc2626">?</span>`;
+          qs.push({ qid, type: op === '+' ? '加法' : '減法', display, hint: `${a} ${op} ${b} = ?`, answer: val });
+        }
+        break;
+      }
+      case 'connect': {
+        for (let i = 0; i < n; i++) {
+          const a = rand(1, 5), b = rand(1, 4), c = rand(1, 3);
+          const val = a + b + c;
+          if (val > 15) { i--; continue; }
+          const qid = `connect_${a}_${b}_${c}`;
+          qs.push({ qid, type: '連加法', display: `${a} + ${b} + ${c} = <span style="color:#dc2626">?</span>`, hint: `${a} + ${b} + ${c} = ?`, answer: val });
+        }
+        break;
+      }
+      case 'sequence': {
+        const seqTypes = [
+          { start: 1, end: 10, step: 1 },
+          { start: 2, end: 20, step: 2 },
+          { start: 5, end: 30, step: 1 },
+          { start: 10, end: 6, step: -1 }
+        ];
+        for (let i = 0; i < n; i++) {
+          const st = seqTypes[i % seqTypes.length];
+          const pos = rand(1, 4);
+          const nums = [];
+          for (let j = 0; j < 5; j++) {
+            nums.push(st.start + j * st.step);
+          }
+          const ans = nums[pos];
+          const displayArr = nums.map((v, idx) => idx === pos ? '<span style="color:#dc2626;border:2px dashed #dc2626;border-radius:8px;padding:4px 10px;">?</span>' : v);
+          const qid = `seq_${st.start}_${st.step}_${pos}`;
+          qs.push({ qid, type: '數字規律', display: displayArr.join(' , '), hint: `找出 ? 的數字`, answer: ans });
+        }
+        break;
+      }
+      case 'count5': {
+        for (let i = 0; i < n; i++) {
+          const groups = rand(2, 6);
+          const total = groups * 5;
+          const qid = `count5_${groups}`;
+          const circles = Array(groups * 5).fill('●');
+          qs.push({ qid, type: '5個一數', display: `每組5個，共 ${groups} 組<br>總共有 <span style="color:#dc2626">?</span> 個`, hint: `${groups} 組 × 5 = ?`, answer: total });
+        }
+        break;
+      }
+      case 'count10': {
+        for (let i = 0; i < n; i++) {
+          const groups = rand(2, 5);
+          const total = groups * 10;
+          const qid = `count10_${groups}`;
+          qs.push({ qid, type: '10個一數', display: `每組10個，共 ${groups} 組<br>總共有 <span style="color:#dc2626">?</span> 個`, hint: `${groups} 組 × 10 = ?`, answer: total });
+        }
+        break;
+      }
+      case 'backward': {
+        const starts = [10, 15, 20, 25, 30];
+        for (let i = 0; i < n; i++) {
+          const s = starts[i % starts.length];
+          const missingIdx = rand(1, 4);
+          const nums = [];
+          for (let j = 0; j <= 5; j++) {
+            nums.push(s - j);
+          }
+          const ans = nums[missingIdx];
+          const disp = nums.map((v, idx) => idx === missingIdx ? '<span style="color:#dc2626;border:2px dashed #dc2626;border-radius:8px;padding:4px 10px;">?</span>' : v);
+          const qid = `backward_${s}_${missingIdx}`;
+          qs.push({ qid, type: '倒數', display: `從 ${s} 倒數：<br>${disp.join(' , ')}`, hint: `從 ${s} 開始倒數，? 是多少？`, answer: ans });
+        }
+        break;
+      }
+      case 'compare': {
+        for (let i = 0; i < n; i++) {
+          const a = rand(1, 20), b = rand(1, 20);
+          if (a === b) { i--; continue; }
+          const showBigger = Math.random() < 0.5;
+          const qid = `compare_${a}_${b}`;
+          if (showBigger) {
+            qs.push({ qid, type: '比較大小', display: `<span style="color:#16a34a;font-size:42px;">${a}</span> 和 <span style="color:#7c3aed;font-size:42px;">${b}</span><br>哪個比較<span style="color:#dc2626;">大</span>？`, hint: `${a} 和 ${b}，哪個比較大？`, answer: Math.max(a, b) });
+          } else {
+            qs.push({ qid, type: '比較大小', display: `<span style="color:#16a34a;font-size:42px;">${a}</span> 和 <span style="color:#7c3aed;font-size:42px;">${b}</span><br>哪個比較<span style="color:#dc2626;">小</span>？`, hint: `${a} 和 ${b}，哪個比較小？`, answer: Math.min(a, b) });
+          }
+        }
+        break;
+      }
+      case 'clock': {
+        const clockTypes = [
+          { h: 3, m: 0, label: '3 點' },
+          { h: 6, m: 0, label: '6 點' },
+          { h: 9, m: 0, label: '9 點' },
+          { h: 12, m: 0, label: '12 點' },
+          { h: 2, m: 0, label: '2 點' },
+          { h: 5, m: 0, label: '5 點' },
+          { h: 3, m: 30, label: '3 點半' },
+          { h: 6, m: 30, label: '6 點半' },
+          { h: 9, m: 30, label: '9 點半' },
+          { h: 12, m: 30, label: '12 點半' },
+          { h: 2, m: 30, label: '2 點半' },
+          { h: 5, m: 30, label: '5 點半' }
+        ];
+        const selected = [clockTypes[i % clockTypes.length]];
+        selected.forEach(ct => {
+          const qid = `clock_${ct.h}_${ct.m}`;
+          qs.push({ qid, type: '時鐘', display: `現在是<span style="color:#dc2626;">幾點</span>？`, hint: '', answer: ct.label, clockH: ct.h, clockM: ct.m });
+        });
+        break;
+      }
+      case 'wordprob': {
+        const probs = [
+          { q: '樹上有 5 隻小鳥，又飛來 3 隻，一共有 <span style="color:#dc2626">?</span> 隻', a: 8 },
+          { q: '媽媽有 8 個蘋果，吃了 3 個，還剩 <span style="color:#dc2626">?</span> 個', a: 5 },
+          { q: '小明有 4 粒糖，爸爸給了他 2 粒，現在有 <span style="color:#dc2626">?</span> 粒', a: 6 },
+          { q: '盤子裡有 7 塊餅乾，妹妹吃了 4 塊，還剩 <span style="color:#dc2626">?</span> 塊', a: 3 },
+          { q: '車站有 6 輛車，又來了 4 輛，一共有 <span style="color:#dc2626">?</span> 輛', a: 10 }
+        ];
+        const p = probs[i % probs.length];
+        qs.push({ qid: 'wordprob_' + i, type: '文字題', display: p.q, hint: '聽完題目，讓小朋友說出答案', answer: p.a });
+        break;
+      }
+      case 'pattern': {
+        const pats = [
+          { seq: ['●', '○', '●', '○', '●'], ans: '○' },
+          { seq: ['⬛', '⬜', '⬛', '⬜', '⬛'], ans: '⬜' },
+          { seq: ['▲', '▲', '●', '▲', '▲'], ans: '●' },
+          { seq: ['★', '★', '☆', '★', '★'], ans: '☆' },
+          { seq: ['●', '●', '○', '●', '●'], ans: '○' }
+        ];
+        const p = pats[i % pats.length];
+        const disp = p.seq.map((s, idx) => idx === p.seq.length - 1 ? `<span style="color:#dc2626;border:2px dashed #dc2626;border-radius:8px;padding:4px 8px;">?</span>` : s).join(' ');
+        qs.push({ qid: 'pattern_' + i, type: '圖案規律', display: `請圈出下一個圖案：<br><div style="font-size:36px;margin-top:8px;letter-spacing:8px;">${disp}</div>`, hint: '觀察圖案排列規律', answer: p.ans });
+        break;
+      }
+    }
+  });
+
+  return shuffle(qs);
+}
+
+// ==================== PRACTICE ====================
+function startPractice() {
+  if (selectedTopicIds.size === 0) TOPICS.forEach(t => selectedTopicIds.add(t.id));
+  const qs = genQuestions();
+  if (qs.length === 0) return;
+  practiceQueue = qs;
+  currentIndex = 0;
+  wrongItems = [];
+  roundCorrect = 0;
+  roundWrong = 0;
+  isRetry = false;
+  showPage('page-practice');
+  showQuestion();
+}
+
+function retryWrong() {
+  if (wrongItems.length === 0) return;
+  practiceQueue = shuffle(wrongItems);
+  currentIndex = 0;
+  wrongItems = [];
+  isRetry = true;
+  showPage('page-practice');
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = practiceQueue[currentIndex];
+  const total = practiceQueue.length;
+  document.getElementById('progress-fill').style.width = ((currentIndex / total) * 100) + '%';
+  document.getElementById('q-number').textContent = `第 ${currentIndex+1} 題，共 ${total} 題` + (isRetry ? '（錯題重練）' : '');
+  document.getElementById('q-type-badge').textContent = q.type;
+
+  const textEl = document.getElementById('q-text');
+  textEl.innerHTML = q.display;
+  textEl.style.animation = 'none';
+  void textEl.offsetHeight;
+  textEl.style.animation = 'popIn .3s ease';
+
+  document.getElementById('q-hint').textContent = q.hint || '讓小朋友回答，你來判斷對錯';
+
+  // Render clock if needed
+  const visualEl = document.getElementById('q-visual');
+  visualEl.innerHTML = '';
+  if (q.clockH !== undefined) {
+    visualEl.innerHTML = renderClock(q.clockH, q.clockM);
+  }
+}
+
+function renderClock(h, m) {
+  const hourAngle = (h % 12) * 30 + (m / 60) * 30;
+  const minAngle = m * 6;
+  const marks = [];
+  for (let i = 1; i <= 12; i++) {
+    const angle = i * 30 - 90;
+    const rad = angle * Math.PI / 180;
+    const r = 72;
+    const x = Math.round(90 + r * Math.cos(rad));
+    const y = Math.round(90 + r * Math.sin(rad));
+    marks.push(`<div class="clock-mark" style="left:${x-6}px;top:${y-8}px;">${i}</div>`);
+  }
+  return `<div class="clock-face">
+    ${marks.join('')}
+    <div class="clock-hour" style="transform:translateX(-50%) rotate(${hourAngle}deg)"></div>
+    <div class="clock-minute" style="transform:translateX(-50%) rotate(${minAngle}deg)"></div>
+    <div class="clock-center"></div>
+  </div>`;
+}
+
+function markCorrect() {
+  const q = practiceQueue[currentIndex];
+  updateRecord(q.qid, true);
+  roundCorrect++;
+  nextQuestion();
+}
+
+function markWrong() {
+  const q = practiceQueue[currentIndex];
+  updateRecord(q.qid, false);
+  wrongItems.push(q);
+  roundWrong++;
+  nextQuestion();
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= practiceQueue.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+// ==================== RESULT ====================
+function showResult() {
+  const total = roundCorrect + roundWrong;
+  const pct = total > 0 ? Math.round((roundCorrect / total) * 100) : 0;
+  const allGood = roundWrong === 0;
+
+  document.getElementById('result-icon').textContent = allGood ? '\u{1F389}' : '\u{1F44D}';
+  document.getElementById('result-title').textContent = isRetry
+    ? (allGood ? '\u{1F3C6} 錯題全對，好厲害！' : '\u{1F4AA} 錯題練習完成')
+    : (allGood ? '\u{1F389} 全部答對！' : '\u{1F44D} 練習完成！');
+  document.getElementById('result-stats').innerHTML =
+    `共 <span class="num">${total}</span> 題<br>` +
+    `正確 <span class="num green">${roundCorrect}</span> 題 &nbsp;|&nbsp; ` +
+    `錯誤 <span class="num red">${roundWrong}</span> 題<br>` +
+    `正確率 <span class="num">${pct}%</span>`;
+  document.getElementById('star-container').style.display = allGood ? 'flex' : 'none';
+
+  const retryBtn = document.getElementById('btn-retry');
+  if (wrongItems.length > 0) {
+    retryBtn.textContent = `錯題重練（${wrongItems.length} 題）`;
+    retryBtn.style.display = 'inline-block';
+  } else {
+    retryBtn.style.display = 'none';
+  }
+  showPage('page-result');
+}
+
+// ==================== RECORDS ====================
+function showRecords() {
+  const records = loadRecords();
+  const tbody = document.getElementById('records-body');
+  const empty = document.getElementById('empty-msg');
+  tbody.innerHTML = '';
+
+  const entries = Object.entries(records).filter(([,v]) => v.correct > 0 || v.incorrect > 0);
+  if (entries.length === 0) {
+    empty.style.display = 'block';
+    document.getElementById('records-table').style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    document.getElementById('records-table').style.display = '';
+    entries.forEach(([qid, r]) => {
+      const total = r.correct + r.incorrect;
+      const pct = total > 0 ? Math.round((r.correct / total) * 100) + '%' : '-';
+      const type = qid.split('_')[0];
+      const label = qid.replace(/_/g, ' ');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td style="text-align:left;font-size:13px;">${label}</td>
+        <td style="font-size:12px;">${type}</td>
+        <td>${r.correct}</td><td>${r.incorrect}</td><td>${pct}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  showPage('page-records');
+}
+
+function showConfirmReset() {
+  document.getElementById('overlay-msg').textContent = '確定要重置所有數學學習數據嗎？此操作無法復原。';
+  document.getElementById('overlay-confirm').onclick = function() {
+    localStorage.removeItem(STORAGE_KEY);
+    hideOverlay();
+    showRecords();
+  };
+  document.getElementById('overlay').classList.add('active');
+}
+function hideOverlay() { document.getElementById('overlay').classList.remove('active'); }
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  TOPICS.forEach(t => selectedTopicIds.add(t.id));
+});
+</script>
+</body>
+</html>
