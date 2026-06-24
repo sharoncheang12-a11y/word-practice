@@ -467,11 +467,11 @@ function genQuestions() {
           { h: 2, m: 30, label: '2 點半' },
           { h: 5, m: 30, label: '5 點半' }
         ];
-        const selected = [clockTypes[i % clockTypes.length]];
-        selected.forEach(ct => {
+        for (let ci = 0; ci < n; ci++) {
+          const ct = clockTypes[ci % clockTypes.length];
           const qid = `clock_${ct.h}_${ct.m}`;
           qs.push({ qid, type: '時鐘', display: `現在是<span style="color:#dc2626;">幾點</span>？`, hint: '', answer: ct.label, clockH: ct.h, clockM: ct.m });
-        });
+        }
         break;
       }
       case 'wordprob': {
@@ -482,8 +482,10 @@ function genQuestions() {
           { q: '盤子裡有 7 塊餅乾，妹妹吃了 4 塊，還剩 <span style="color:#dc2626">?</span> 塊', a: 3 },
           { q: '車站有 6 輛車，又來了 4 輛，一共有 <span style="color:#dc2626">?</span> 輛', a: 10 }
         ];
-        const p = probs[i % probs.length];
-        qs.push({ qid: 'wordprob_' + i, type: '文字題', display: p.q, hint: '聽完題目，讓小朋友說出答案', answer: p.a });
+        for (let wi = 0; wi < n; wi++) {
+          const p = probs[wi % probs.length];
+          qs.push({ qid: 'wordprob_' + wi, type: '文字題', display: p.q, hint: '聽完題目，讓小朋友說出答案', answer: p.a });
+        }
         break;
       }
       case 'pattern': {
@@ -494,9 +496,11 @@ function genQuestions() {
           { seq: ['★', '★', '☆', '★', '★'], ans: '☆' },
           { seq: ['●', '●', '○', '●', '●'], ans: '○' }
         ];
-        const p = pats[i % pats.length];
-        const disp = p.seq.map((s, idx) => idx === p.seq.length - 1 ? `<span style="color:#dc2626;border:2px dashed #dc2626;border-radius:8px;padding:4px 8px;">?</span>` : s).join(' ');
-        qs.push({ qid: 'pattern_' + i, type: '圖案規律', display: `請圈出下一個圖案：<br><div style="font-size:36px;margin-top:8px;letter-spacing:8px;">${disp}</div>`, hint: '觀察圖案排列規律', answer: p.ans });
+        for (let pi = 0; pi < n; pi++) {
+          const p = pats[pi % pats.length];
+          const disp = p.seq.map((s, idx) => idx === p.seq.length - 1 ? `<span style="color:#dc2626;border:2px dashed #dc2626;border-radius:8px;padding:4px 8px;">?</span>` : s).join(' ');
+          qs.push({ qid: 'pattern_' + pi, type: '圖案規律', display: `請圈出下一個圖案：<br><div style="font-size:36px;margin-top:8px;letter-spacing:8px;">${disp}</div>`, hint: '觀察圖案排列規律', answer: p.ans });
+        }
         break;
       }
     }
